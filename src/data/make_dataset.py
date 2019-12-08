@@ -90,14 +90,14 @@ def build_HDF5(jpeg_dir, nb_channels, data_dir, size=256):
                 data_full[-arr_img_full.shape[0]:] = arr_img_full.astype(np.uint8)
                 data_sketch[-arr_img_sketch.shape[0]:] = arr_img_sketch.astype(np.uint8)
 
-def check_HDF5(jpeg_dir, nb_channels):
+def check_HDF5(jpeg_dir, nb_channels, data_dir):
     """
     Plot images with landmarks to check the processing
     """
 
     # Get hdf5 file
     file_name = os.path.basename(jpeg_dir.rstrip("/"))
-    hdf5_file = os.path.join(data_dir, "%s_data.h5" % file_name)
+    hdf5_file = os.path.join(data_dir, "processed/%s_data.h5" % file_name)
 
     with h5py.File(hdf5_file, "r") as hf:
         data_full = hf["train_data_full"]
@@ -134,4 +134,4 @@ if __name__ == '__main__':
                size=args.img_size)
     
     if args.do_plot:
-        check_HDF5(args.jpeg_dir, args.nb_channels)
+        check_HDF5(args.jpeg_dir, args.nb_channels, args.data_dir)
