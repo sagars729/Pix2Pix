@@ -11,7 +11,6 @@ sys.path.append("../utils")
 import general_utils
 import data_utils
 
-std_label = lambda x, f: x if not f else "_latest"
 
 def l1_loss(y_true, y_pred):
     return K.sum(K.abs(y_pred - y_true), axis=-1)
@@ -43,7 +42,6 @@ def train(**kwargs):
     do_plot = kwargs["do_plot"]
     logging_dir = kwargs["logging_dir"]
     save_every_epoch = kwargs["epoch"]
-    save_latest = kwargs["save_latest"]
     
     epoch_size = n_batch_per_epoch * batch_size
 
@@ -158,13 +156,13 @@ def train(**kwargs):
             print('Epoch %s/%s, Time: %s' % (e + 1, nb_epoch, time.time() - start))
 
             if e % save_every_epoch == 0:
-                gen_weights_path = os.path.join(logging_dir, 'models/%s/gen_weights_epoch%s.h5' % (model_name, std_label(e,save_latest)))
+                gen_weights_path = os.path.join(logging_dir, 'models/%s/gen_weights_epoch%s.h5' % (model_name, e))
                 generator_model.save_weights(gen_weights_path, overwrite=True)
 
-                disc_weights_path = os.path.join(logging_dir, 'models/%s/disc_weights_epoch%s.h5' % (model_name, std_label(e,save_latest)))
+                disc_weights_path = os.path.join(logging_dir, 'models/%s/disc_weights_epoch%s.h5' % (model_name, e))
                 discriminator_model.save_weights(disc_weights_path, overwrite=True)
 
-                DCGAN_weights_path = os.path.join(logging_dir, 'models/%s/DCGAN_weights_epoch%s.h5' % (model_name, std_label(e,save_latest)))
+                DCGAN_weights_path = os.path.join(logging_dir, 'models/%s/DCGAN_weights_epoch%s.h5' % (model_name, e))
                 DCGAN_model.save_weights(DCGAN_weights_path, overwrite=True)
 
     except KeyboardInterrupt:
