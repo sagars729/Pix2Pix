@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument('--use_label_smoothing', action="store_true", help="Whether to smooth the positive labels when training D")
     parser.add_argument('--label_flipping', default=0, type=float, help="Probability (0 to 1.) to flip the labels when training D")
     parser.add_argument('--logging_dir', default='../..', type=str, help="Path to logging directory")
+    parser.add_argument('--save_latest', action="save_latest", help="Only save latest epoch")
 
     args = parser.parse_args()
 
@@ -66,7 +67,8 @@ if __name__ == "__main__":
                 "label_flipping": args.label_flipping,
                 "patch_size": args.patch_size,
                 "use_mbd": args.use_mbd,
-                "logging_dir": args.logging_dir
+                "logging_dir": args.logging_dir,
+                "save_latest": args.save_latest
                 }
 
     # Launch training
