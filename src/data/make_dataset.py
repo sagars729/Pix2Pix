@@ -9,7 +9,7 @@ from tqdm import tqdm as tqdm
 import matplotlib.pylab as plt
 
 
-def format_image(img_path, size, nb_channels):
+def format_image(img_path, size, nb_channels, flip):
     """
     Load img with opencv and reshape
     """
@@ -37,10 +37,11 @@ def format_image(img_path, size, nb_channels):
     img_full = np.expand_dims(img_full, 0).transpose(0, 3, 1, 2)
     img_sketch = np.expand_dims(img_sketch, 0).transpose(0, 3, 1, 2)
 
+    if flip: return img_sketch, img_full
     return img_full, img_sketch
 
 
-def build_HDF5(jpeg_dir, nb_channels, data_dir, size=256):
+def build_HDF5(jpeg_dir, nb_channels, data_dir, size=256, file_name=None, flip=False):
     """
     Gather the data in a single HDF5 file.
     """
@@ -48,7 +49,7 @@ def build_HDF5(jpeg_dir, nb_channels, data_dir, size=256):
     data_dir = os.path.join(data_dir, 'processed')
     
     # Put train data in HDF5
-    file_name = os.path.basename(jpeg_dir.rstrip("/"))
+    if not file_name: file_name = os.path.basename(jpeg_dir.rstrip("/"))
     hdf5_file = os.path.join(data_dir, "%s_data.h5" % file_name)
     with h5py.File(hdf5_file, "w") as hfw:
 
@@ -78,7 +79,7 @@ def build_HDF5(jpeg_dir, nb_channels, data_dir, size=256):
             for chunk_idx in tqdm(arr_chunks):
 
                 list_img_path = list_img[chunk_idx].tolist()
-                output = parmap.map(format_image, list_img_path, size, nb_channels, pm_parallel=False)
+                output = parmap.map(format_image, list_img_path, size, nb_channels, flip, pm_parallel=False)
 
                 arr_img_full = np.concatenate([o[0] for o in output], axis=0)
                 arr_img_sketch = np.concatenate([o[1] for o in output], axis=0)
@@ -126,12 +127,16 @@ if __name__ == '__main__':
     parser.add_argument('--do_plot', action="store_true",
                         help='Plot the images to make sure the data processing went OK')
     parser.add_argument('--data_dir', default='../../data', type=str, help='Data directory')
+    parser.add_argument('--flip', action="store_true", help='Flip Input and Output')
+    parser.add_argument('--file_name', default=None, help='Data file name')
     args = parser.parse_args()  
     
     build_HDF5(args.jpeg_dir,
                args.nb_channels,
                args.data_dir,
-               size=args.img_size)
+               size=args.img_size,
+               file_name=args.file_name,
+               flip=args.flip)
     
     if args.do_plot:
         check_HDF5(args.jpeg_dir, args.nb_channels, args.data_dir)
