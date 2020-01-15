@@ -27,8 +27,8 @@ if __name__ == "__main__":
     parser.add_argument('--use_label_smoothing', action="store_true", help="Whether to smooth the positive labels when training D")
     parser.add_argument('--label_flipping', default=0, type=float, help="Probability (0 to 1.) to flip the labels when training D")
     parser.add_argument('--logging_dir', default='../..', type=str, help="Path to logging directory")
-    parser.add_argument('--save_latest', action="save_latest", help="Only save latest epoch")
-
+    parser.add_argument('--save_latest', action="store_true", help="Only save latest epoch")
+    parser.add_argument('--model_name', default="CNN", help="Name of model")
     args = parser.parse_args()
 
     # Set the backend by modifying the env variable
@@ -56,7 +56,7 @@ if __name__ == "__main__":
                 "batch_size": args.batch_size,
                 "n_batch_per_epoch": args.n_batch_per_epoch,
                 "nb_epoch": args.nb_epoch,
-                "model_name": "CNN",
+                "model_name": args.model_name,
                 "epoch": args.epoch,
                 "nb_classes": args.nb_classes,
                 "do_plot": args.do_plot,
