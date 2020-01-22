@@ -2,6 +2,7 @@ from keras.datasets import mnist
 from keras.utils import np_utils
 import numpy as np
 import h5py
+import cv2
 
 import os
 
@@ -155,15 +156,22 @@ def get_disc_batch(X_full_batch, X_sketch_batch, generator_model, batch_counter,
     return X_disc, y_disc
 
 
-def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_data_format, suffix, logging_dir):
-
+def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_data_format, suffix, logging_dir, model_name="CNN", epoch="latest"):
     # Generate images
     X_gen = generator_model.predict(X_sketch)
 
     X_sketch = inverse_normalization(X_sketch)
     X_full = inverse_normalization(X_full)
-    X_gen = inverse_normalization(X_gen) 
-    
+    X_gen = inverse_normalization(X_gen) 	
+
+    os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/sketch" % (model_name, epoch, suffix)))
+    os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/full" % (model_name, epoch, suffix)))
+    os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/gen" % (model_name, epoch, suffix)))
+    for i in range(len(X_sketch)):
+        cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/sketch/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_sketch[i], cv2.COLOR_RGB2BGR))
+        cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/full/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_full[i], cv2.COLOR_RGB2BGR))
+        cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/gen/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_gen[i], cv2.COLOR_RGB2BGR))
+
     Xs = X_sketch[:8]
     Xg = X_gen[:8]
     Xr = X_full[:8]
@@ -192,6 +200,6 @@ def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_da
     else:
         plt.imshow(Xr)
     plt.axis("off")
-    plt.savefig(os.path.join(logging_dir, "figures/current_batch_%s.png" % suffix))
+    plt.savefig(os.path.join(logging_dir, "figures/%s/current_batch_%s.png" % (model_name, suffix)))
     plt.clf()
     plt.close()

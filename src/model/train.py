@@ -144,11 +144,11 @@ def train(**kwargs):
                     # Get new images from validation
                     data_utils.plot_generated_batch(X_full_batch, X_sketch_batch, generator_model,
                                                     batch_size, image_data_format, "training",
-                                                    logging_dir)
+                                                    logging_dir, model_name, e)
                     X_full_batch, X_sketch_batch = next(data_utils.gen_batch(X_full_val, X_sketch_val, batch_size))
                     data_utils.plot_generated_batch(X_full_batch, X_sketch_batch, generator_model,
                                                     batch_size, image_data_format, "validation",
-                                                    logging_dir)
+                                                    logging_dir, model_name, e)
 
                 if batch_counter >= n_batch_per_epoch:
                     break
