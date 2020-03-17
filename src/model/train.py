@@ -44,6 +44,7 @@ def train(**kwargs):
     save_every_epoch = kwargs["epoch"]
     save_latest = kwargs["save_latest"]
     load_model = kwargs["load_model"]
+    load_epoch = kwargs["load_epoch"]
     
     epoch_size = n_batch_per_epoch * batch_size
 
@@ -73,7 +74,8 @@ def train(**kwargs):
                                       batch_size,
                                       do_plot,
                                       load_model,
-                                      logging_dir)
+                                      logging_dir,
+                                      load_epoch)
         # Load discriminator model
         discriminator_model = models.load("DCGAN_discriminator",
                                           img_dim_disc,
@@ -83,7 +85,8 @@ def train(**kwargs):
                                           batch_size,
                                           do_plot,
                                           load_model,
-                                          logging_dir)
+                                          logging_dir,
+                                          load_epoch)
 
         generator_model.compile(loss='mae', optimizer=opt_discriminator)
         discriminator_model.trainable = False
@@ -93,7 +96,9 @@ def train(**kwargs):
                                    img_dim,
                                    patch_size,
                                    image_data_format,
-                                   load_model)
+                                   load_model,
+                                   logging_dir,
+                                   load_epoch)
 
         loss = [l1_loss, 'binary_crossentropy']
         loss_weights = [1E1, 1]

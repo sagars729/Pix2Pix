@@ -198,7 +198,7 @@ def generator_unet_deconv(img_dim, bn_mode, batch_size, model_name="generator_un
     return generator_unet
 
 
-def DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name="DCGAN_discriminator", use_mbd=True):
+def DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name="DCGAN_discriminator", use_mbd=True, do_plot=True):
     """
     Discriminator model of the DCGAN
 
@@ -236,8 +236,9 @@ def DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name="DCGAN_discrimina
     x = Dense(2, activation="softmax", name="disc_dense")(x_flat)
 
     PatchGAN = Model(inputs=[x_input], outputs=[x, x_flat], name="PatchGAN")
-    print("PatchGAN summary")
-    PatchGAN.summary()
+    if do_plot:
+        print("PatchGAN summary")
+        PatchGAN.summary()
 
     x = [PatchGAN(patch)[0] for patch in list_input]
     x_mbd = [PatchGAN(patch)[1] for patch in list_input]
@@ -271,7 +272,7 @@ def DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name="DCGAN_discrimina
     return discriminator_model
 
 
-def DCGAN(generator, discriminator_model, img_dim, patch_size, image_dim_ordering, load_model=None):
+def DCGAN(generator, discriminator_model, img_dim, patch_size, image_dim_ordering, load_model=None, logging_dir="../..", epoch="latest"):
 
     gen_input = Input(shape=img_dim, name="DCGAN_input")
 
@@ -301,25 +302,27 @@ def DCGAN(generator, discriminator_model, img_dim, patch_size, image_dim_orderin
                   outputs=[generated_image, DCGAN_output],
                   name="DCGAN")
     
-    if load_model: DCGAN.load_weights(load_model)
+    if load_model: DCGAN.load_weights(os.path.join(logging_dir, "models", load_model, "DCGAN_weights_epoch_%s.h5" % epoch))
     return DCGAN
 
 
-def load(model_name, img_dim, nb_patch, bn_mode, use_mbd, batch_size, do_plot, load_model=None, logging_dir="../.."):
+def load(model_name, img_dim, nb_patch, bn_mode, use_mbd, batch_size, do_plot, load_model=None, logging_dir="../..", epoch="latest"):
 
     if model_name == "generator_unet_upsampling":
         model = generator_unet_upsampling(img_dim, bn_mode, model_name=model_name)
+        if load_model: model.load_weights(os.path.join(logging_dir, "models", load_model, "gen_weights_epoch_%s.h5" % epoch))
     elif model_name == "generator_unet_deconv":
         model = generator_unet_deconv(img_dim, bn_mode, batch_size, model_name=model_name)
+        if load_model: model.load_weights(os.path.join(logging_dir, "models", load_model, "gen_weights_epoch_%s.h5" % epoch))
     elif model_name == "DCGAN_discriminator":
-        model = DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name=model_name, use_mbd=use_mbd)
+        model = DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name=model_name, use_mbd=use_mbd, do_plot=do_plot)
+        if load_model: model.load_weights(os.path.join(logging_dir, "models", load_model, "disc_weights_epoch_%s.h5" % epoch))
         
-    model.summary()
     if do_plot:
+        model.summary()
         from keras.utils import plot_model
         plot_model(model, to_file=os.path.join(logging_dir, "figures/%s.png" % model_name), show_shapes=True, show_layer_names=True)
-    
-    if load_model: model.load_weights(load_model)
+   
     return model
 
 

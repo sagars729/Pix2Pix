@@ -200,7 +200,7 @@ def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_da
     else:
         plt.imshow(Xr)
     plt.axis("off")
-    plt.title("Generated Images From %s Data Using %s Model With %d epochs" % (suffix.capitalize(), model_name.capitalize(), epoch))
+    plt.title("%d Epochs of Training on %s Model (%s)" % (epoch+1, model_name.capitalize(), suffix.capitalize()), wrap=True)
     plt.savefig(os.path.join(logging_dir, "figures/%s/current_batch_%s.png" % (model_name, suffix)))
     plt.clf()
     plt.close()
