@@ -12,6 +12,10 @@ import general_utils
 import data_utils
 
 std_label = lambda x, f: x if not f else "_latest"
+
+try: import cPickle as pickle
+except: import pickle
+    
 def l1_loss(y_true, y_pred):
     return K.sum(K.abs(y_pred - y_true), axis=-1)
 
@@ -48,6 +52,7 @@ def train(**kwargs):
     base_epoch = kwargs["base_epoch"]
     analyze = kwargs["analyze"]
     analyze_batch = kwargs["analyze_batch"]
+    load_analysis = kwargs["load_analysis"]
     
     epoch_size = n_batch_per_epoch * batch_size
 
@@ -61,9 +66,17 @@ def train(**kwargs):
     # Get the number of non overlapping patch and the size of input image to the discriminator
     nb_patch, img_dim_disc = data_utils.get_nb_patch(img_dim, patch_size, image_data_format)
     
+    
     analysis = {"disc_loss": {}, 
                 "gen_loss": {}, 
                 "custom": {}}
+    
+    if load_analysis:  
+        try:
+            infile = open(os.path.join(logging_dir, "figures", model_name, load_analysis), "rb")
+            analysis = pickle.load(infile)
+            infile.close()
+        except: print("Loading Analysis Failed")
 
     try:
 
@@ -119,7 +132,7 @@ def train(**kwargs):
 
         # Start training
         print("Start training")
-        for e in range(base_epoch, base_epoch+nb_epoch):
+        for e in range(base_epoch, nb_epoch):
             # Initialize progbar and batch counter
             progbar = generic_utils.Progbar(epoch_size)
             batch_counter = 1
@@ -201,5 +214,12 @@ def train(**kwargs):
                     
     except KeyboardInterrupt:
         pass
+    
+    if load_analysis:
+        try:
+            outfile = open(os.path.join(logging_dir, "figures", model_name, load_analysis), "wb")
+            pickle.dump(analysis,outfile)
+            outfile.close()
+        except: print("Saving Analysis Failed")
     
     return analysis
