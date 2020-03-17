@@ -43,6 +43,7 @@ def train(**kwargs):
     logging_dir = kwargs["logging_dir"]
     save_every_epoch = kwargs["epoch"]
     save_latest = kwargs["save_latest"]
+    load_model = kwargs["load_model"]
     
     epoch_size = n_batch_per_epoch * batch_size
 
@@ -50,7 +51,7 @@ def train(**kwargs):
     general_utils.setup_logging(model_name, logging_dir=logging_dir)
 
     # Load and rescale data
-    X_full_train, X_sketch_train, X_full_val, X_sketch_val = data_utils.load_data(dset, image_data_format)
+    X_full_train, X_sketch_train, X_full_val, X_sketch_val = data_utils.load_data(dset, image_data_format, logging_dir)
     img_dim = X_full_train.shape[-3:]
 
     # Get the number of non overlapping patch and the size of input image to the discriminator
@@ -70,7 +71,9 @@ def train(**kwargs):
                                       bn_mode,
                                       use_mbd,
                                       batch_size,
-                                      do_plot)
+                                      do_plot,
+                                      load_model,
+                                      logging_dir)
         # Load discriminator model
         discriminator_model = models.load("DCGAN_discriminator",
                                           img_dim_disc,
@@ -78,7 +81,9 @@ def train(**kwargs):
                                           bn_mode,
                                           use_mbd,
                                           batch_size,
-                                          do_plot)
+                                          do_plot,
+                                          load_model,
+                                          logging_dir)
 
         generator_model.compile(loss='mae', optimizer=opt_discriminator)
         discriminator_model.trainable = False
@@ -87,7 +92,8 @@ def train(**kwargs):
                                    discriminator_model,
                                    img_dim,
                                    patch_size,
-                                   image_data_format)
+                                   image_data_format,
+                                   load_model)
 
         loss = [l1_loss, 'binary_crossentropy']
         loss_weights = [1E1, 1]

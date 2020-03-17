@@ -88,9 +88,9 @@ def extract_patches(X, image_data_format, patch_size):
     return list_X
 
 
-def load_data(dset, image_data_format):
+def load_data(dset, image_data_format, logging_dir="../.."):
 
-    with h5py.File("../../data/processed/%s_data.h5" % dset, "r") as hf:
+    with h5py.File(os.path.join(logging_dir, "data/processed/%s_data.h5" % dset), "r") as hf:
 
         X_full_train = hf["train_data_full"][:].astype(np.float32)
         X_full_train = normalization(X_full_train)
@@ -164,13 +164,13 @@ def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_da
     X_full = inverse_normalization(X_full)
     X_gen = inverse_normalization(X_gen) 	
 
-    os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/sketch" % (model_name, epoch, suffix)))
-    os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/full" % (model_name, epoch, suffix)))
-    os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/gen" % (model_name, epoch, suffix)))
-    for i in range(len(X_sketch)):
-        cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/sketch/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_sketch[i], cv2.COLOR_RGB2BGR))
-        cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/full/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_full[i], cv2.COLOR_RGB2BGR))
-        cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/gen/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_gen[i], cv2.COLOR_RGB2BGR))
+    #os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/sketch" % (model_name, epoch, suffix)))
+    #os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/full" % (model_name, epoch, suffix)))
+    #os.system("mkdir -p " + os.path.join(logging_dir, "figures/%s/%s/%s/gen" % (model_name, epoch, suffix)))
+    #for i in range(len(X_sketch)):
+    #    cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/sketch/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_sketch[i], cv2.COLOR_RGB2BGR))
+    #    cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/full/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_full[i], cv2.COLOR_RGB2BGR))
+    #    cv2.imwrite(os.path.join(logging_dir, "figures/%s/%s/%s/gen/%s.png" % (model_name, epoch, suffix, i)), cv2.cvtColor(X_gen[i], cv2.COLOR_RGB2BGR))
 
     Xs = X_sketch[:8]
     Xg = X_gen[:8]
@@ -200,6 +200,7 @@ def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_da
     else:
         plt.imshow(Xr)
     plt.axis("off")
+    plt.title("Generated Images From %s Data Using %s Model With %d epochs" % (suffix.capitalize(), model_name.capitalize(), epoch))
     plt.savefig(os.path.join(logging_dir, "figures/%s/current_batch_%s.png" % (model_name, suffix)))
     plt.clf()
     plt.close()

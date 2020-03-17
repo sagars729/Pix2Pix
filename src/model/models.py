@@ -20,7 +20,7 @@ def minb_disc(x):
 def lambda_output(input_shape):
     return input_shape[:2]
 
-
+import os
 # def conv_block_unet(x, f, name, bn_mode, bn_axis, bn=True, dropout=False, strides=(2,2)):
 
 #     x = Conv2D(f, (3, 3), strides=strides, name=name, padding="same")(x)
@@ -271,7 +271,7 @@ def DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name="DCGAN_discrimina
     return discriminator_model
 
 
-def DCGAN(generator, discriminator_model, img_dim, patch_size, image_dim_ordering):
+def DCGAN(generator, discriminator_model, img_dim, patch_size, image_dim_ordering, load_model=None):
 
     gen_input = Input(shape=img_dim, name="DCGAN_input")
 
@@ -300,35 +300,27 @@ def DCGAN(generator, discriminator_model, img_dim, patch_size, image_dim_orderin
     DCGAN = Model(inputs=[gen_input],
                   outputs=[generated_image, DCGAN_output],
                   name="DCGAN")
-
+    
+    if load_model: DCGAN.load_weights(load_model)
     return DCGAN
 
 
-def load(model_name, img_dim, nb_patch, bn_mode, use_mbd, batch_size, do_plot):
+def load(model_name, img_dim, nb_patch, bn_mode, use_mbd, batch_size, do_plot, load_model=None, logging_dir="../.."):
 
     if model_name == "generator_unet_upsampling":
         model = generator_unet_upsampling(img_dim, bn_mode, model_name=model_name)
-        model.summary()
-        if do_plot:
-            from keras.utils import plot_model
-            plot_model(model, to_file="../../figures/%s.png" % model_name, show_shapes=True, show_layer_names=True)
-        return model
-
-    if model_name == "generator_unet_deconv":
+    elif model_name == "generator_unet_deconv":
         model = generator_unet_deconv(img_dim, bn_mode, batch_size, model_name=model_name)
-        model.summary()
-        if do_plot:
-            from keras.utils import plot_model
-            plot_model(model, to_file="../../figures/%s.png" % model_name, show_shapes=True, show_layer_names=True)
-        return model
-
-    if model_name == "DCGAN_discriminator":
+    elif model_name == "DCGAN_discriminator":
         model = DCGAN_discriminator(img_dim, nb_patch, bn_mode, model_name=model_name, use_mbd=use_mbd)
-        model.summary()
-        if do_plot:
-            from keras.utils import plot_model
-            plot_model(model, to_file="../../figures/%s.png" % model_name, show_shapes=True, show_layer_names=True)
-        return model
+        
+    model.summary()
+    if do_plot:
+        from keras.utils import plot_model
+        plot_model(model, to_file=os.path.join(logging_dir, "figures/%s.png" % model_name), show_shapes=True, show_layer_names=True)
+    
+    if load_model: model.load_weights(load_model)
+    return model
 
 
 if __name__ == "__main__":
