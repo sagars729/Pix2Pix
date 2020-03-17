@@ -120,6 +120,10 @@ def gen_batch(X1, X2, batch_size):
     while True:
         idx = np.random.choice(X1.shape[0], batch_size, replace=False)
         yield X1[idx], X2[idx]
+        
+def gen_batch_random(X1, X2, batch_size):
+    idx = np.random.choice(X1.shape[0], batch_size)
+    return X1[idx], X2[idx]
 
 
 def get_disc_batch(X_full_batch, X_sketch_batch, generator_model, batch_counter, patch_size,
@@ -155,6 +159,16 @@ def get_disc_batch(X_full_batch, X_sketch_batch, generator_model, batch_counter,
 
     return X_disc, y_disc
 
+
+def get_generated_batch(X_full, X_sketch, generator_model):
+    # Generate images
+    X_gen = generator_model.predict(X_sketch)
+
+    X_sketch = np.asarray([cv2.cvtColor(im, cv2.COLOR_RGB2BGR) for im in inverse_normalization(X_sketch)])
+    X_full = np.asarray([cv2.cvtColor(im, cv2.COLOR_RGB2BGR) for im in inverse_normalization(X_full)])
+    X_gen = np.asarray([cv2.cvtColor(im, cv2.COLOR_RGB2BGR) for im in inverse_normalization(X_gen)])
+    
+    return X_full, X_sketch, X_gen
 
 def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_data_format, suffix, logging_dir, model_name="CNN", epoch="latest"):
     # Generate images

@@ -45,6 +45,9 @@ def train(**kwargs):
     save_latest = kwargs["save_latest"]
     load_model = kwargs["load_model"]
     load_epoch = kwargs["load_epoch"]
+    base_epoch = kwargs["base_epoch"]
+    analyze = kwargs["analyze"]
+    analyze_batch = kwargs["analyze_batch"]
     
     epoch_size = n_batch_per_epoch * batch_size
 
@@ -57,6 +60,10 @@ def train(**kwargs):
 
     # Get the number of non overlapping patch and the size of input image to the discriminator
     nb_patch, img_dim_disc = data_utils.get_nb_patch(img_dim, patch_size, image_data_format)
+    
+    analysis = {"disc_loss": {}, 
+                "gen_loss": {}, 
+                "custom": {}}
 
     try:
 
@@ -112,7 +119,7 @@ def train(**kwargs):
 
         # Start training
         print("Start training")
-        for e in range(nb_epoch):
+        for e in range(base_epoch, base_epoch+nb_epoch):
             # Initialize progbar and batch counter
             progbar = generic_utils.Progbar(epoch_size)
             batch_counter = 1
@@ -167,6 +174,9 @@ def train(**kwargs):
             print("")
             print('Epoch %s/%s, Time: %s' % (e + 1, nb_epoch, time.time() - start))
 
+            analysis["gen_loss"][e] = gen_loss[2]
+            analysis["disc_loss"][e] = disc_loss
+            
             if e % save_every_epoch == 0:
                 gen_weights_path = os.path.join(logging_dir, 'models/%s/gen_weights_epoch%s.h5' % (model_name, std_label(e,save_latest)))
                 generator_model.save_weights(gen_weights_path, overwrite=True)
@@ -176,6 +186,20 @@ def train(**kwargs):
 
                 DCGAN_weights_path = os.path.join(logging_dir, 'models/%s/DCGAN_weights_epoch%s.h5' % (model_name, std_label(e,save_latest)))
                 DCGAN_model.save_weights(DCGAN_weights_path, overwrite=True)
-
+                
+                if analyze: 
+                    X_full_batch, X_sketch_batch = data_utils.gen_batch_random(X_full_train, X_sketch_train, analyze_batch)
+                    X_full_batch, X_sketch_batch, X_gen_batch = data_utils.get_generated_batch(X_full_batch, X_sketch_batch, generator_model)
+                    train_analysis = analyze.analyze(X_full_batch, X_gen_batch)
+                    
+                    X_full_batch, X_sketch_batch = data_utils.gen_batch_random(X_full_val, X_sketch_val, analyze_batch)
+                    X_full_batch, X_sketch_batch, X_gen_batch = data_utils.get_generated_batch(X_full_batch, X_sketch_batch, generator_model)
+                    val_analysis = analyze.analyze(X_full_batch, X_gen_batch)
+                    
+                    analysis["custom"][e] = (train_analysis, val_analysis)
+                    print("Custom Analysis: Training - %d Validation - %d" % analysis["custom"][e])
+                    
     except KeyboardInterrupt:
         pass
+    
+    return analysis
