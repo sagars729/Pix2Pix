@@ -88,7 +88,7 @@ def extract_patches(X, image_data_format, patch_size):
     return list_X
 
 
-def load_data(dset, image_data_format, logging_dir="../.."):
+def load_data(dset, image_data_format, logging_dir="../..", include_test=False):
 
     with h5py.File(os.path.join(logging_dir, "data/processed/%s_data.h5" % dset), "r") as hf:
 
@@ -111,8 +111,20 @@ def load_data(dset, image_data_format, logging_dir="../.."):
         if image_data_format == "channels_last":
             X_full_val = X_full_val.transpose(0, 2, 3, 1)
             X_sketch_val = X_sketch_val.transpose(0, 2, 3, 1)
+            
+        if not include_test: return X_full_train, X_sketch_train, X_full_val, X_sketch_val
+        
+        X_full_test = hf["test_data_full"][:].astype(np.float32)
+        X_full_test = normalization(X_full_test)
 
-        return X_full_train, X_sketch_train, X_full_val, X_sketch_val
+        X_sketch_test = hf["test_data_sketch"][:].astype(np.float32)
+        X_sketch_test = normalization(X_sketch_test)
+
+        if image_data_format == "channels_last":
+            X_full_test = X_full_test.transpose(0, 2, 3, 1)
+            X_sketch_test = X_sketch_test.transpose(0, 2, 3, 1)
+        
+        return X_full_train, X_sketch_train, X_full_val, X_sketch_val, X_full_test, X_sketch_test
 
 
 def gen_batch(X1, X2, batch_size):

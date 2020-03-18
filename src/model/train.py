@@ -7,7 +7,7 @@ from keras.utils import generic_utils
 from keras.optimizers import Adam, SGD
 import keras.backend as K
 # Utils
-sys.path.append("../utils")
+#sys.path.append("../utils")
 import general_utils
 import data_utils
 
@@ -16,9 +16,31 @@ std_label = lambda x, f: x if not f else "_latest"
 try: import cPickle as pickle
 except: import pickle
     
+import logging
+import threading
+import time
+    
 def l1_loss(y_true, y_pred):
     return K.sum(K.abs(y_pred - y_true), axis=-1)
 
+def thread_analyze_data(full, sketch, numbatch, model, res, analyze):
+    full, sketch = data_utils.gen_batch_random(full, sketch, numbatch)
+    full, sketch, gen = data_utils.get_generated_batch(full, sketch, model)
+    res[0] = analyze.analyze(full, gen)
+    
+def thread_analyze(full_train, sketch_train, full_val, sketch_val, numbatch, model, analyze, analysis, e):
+    train = [0]
+    x = threading.Thread(target=thread_analyze_data, args=(full_train, sketch_train, numbatch, model, train, analyze))
+    x.start()
+    
+    val = [0]         
+    y = threading.Thread(target=thread_analyze_data, args=(full_val, sketch_val, numbatch, model, val, analyze))
+    y.start()
+    
+    x.join()
+    y.join()
+    analysis[analyze.__str__()][e] = (train[0], val[0])
+    print(analyze.__str__(), "Analysis: Training - %d Validation - %d" % analysis[analyze.__str__()][e])
 
 def train(**kwargs):
     """
@@ -69,7 +91,7 @@ def train(**kwargs):
     
     analysis = {"disc_loss": {}, 
                 "gen_loss": {}, 
-                "custom": {}}
+                analyze.__str__(): {}}
     
     if load_analysis:  
         try:
@@ -201,6 +223,8 @@ def train(**kwargs):
                 DCGAN_model.save_weights(DCGAN_weights_path, overwrite=True)
                 
                 if analyze: 
+                    #t = threading.Thread(target=thread_analyze, args=(X_full_train, X_sketch_train, X_full_val, X_sketch_val, analyze_batch, generator_model, analyze, analysis, e))
+                    #t.start()
                     X_full_batch, X_sketch_batch = data_utils.gen_batch_random(X_full_train, X_sketch_train, analyze_batch)
                     X_full_batch, X_sketch_batch, X_gen_batch = data_utils.get_generated_batch(X_full_batch, X_sketch_batch, generator_model)
                     train_analysis = analyze.analyze(X_full_batch, X_gen_batch)
@@ -209,17 +233,19 @@ def train(**kwargs):
                     X_full_batch, X_sketch_batch, X_gen_batch = data_utils.get_generated_batch(X_full_batch, X_sketch_batch, generator_model)
                     val_analysis = analyze.analyze(X_full_batch, X_gen_batch)
                     
-                    analysis["custom"][e] = (train_analysis, val_analysis)
-                    print("Custom Analysis: Training - %d Validation - %d" % analysis["custom"][e])
+                    analysis[analyze.__str__()][e] = (train_analysis, val_analysis)
+                    print(analyze.__str__(), "Analysis: Training - %d Validation - %d" % analysis[analyze.__str__()][e])
+                    
+                    if load_analysis:
+                        try:
+                            outfile = open(os.path.join(logging_dir, "figures", model_name, load_analysis), "wb")
+                            pickle.dump(analysis,outfile)
+                            outfile.close()
+                        except: print("Saving Analysis Failed")
+                
+                print('Time: %s' % (time.time() - start))
                     
     except KeyboardInterrupt:
         pass
-    
-    if load_analysis:
-        try:
-            outfile = open(os.path.join(logging_dir, "figures", model_name, load_analysis), "wb")
-            pickle.dump(analysis,outfile)
-            outfile.close()
-        except: print("Saving Analysis Failed")
     
     return analysis
