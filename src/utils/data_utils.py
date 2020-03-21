@@ -182,7 +182,7 @@ def get_generated_batch(X_full, X_sketch, generator_model):
     
     return X_full, X_sketch, X_gen
 
-def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_data_format, suffix, logging_dir, model_name="CNN", epoch="latest"):
+def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_data_format, suffix, logging_dir, model_name="CNN", epoch="latest", show_title=True, prefix="current_batch"):
     # Generate images
     X_gen = generator_model.predict(X_sketch)
 
@@ -226,7 +226,8 @@ def plot_generated_batch(X_full, X_sketch, generator_model, batch_size, image_da
     else:
         plt.imshow(Xr)
     plt.axis("off")
-    plt.title("%d Epochs of Training on %s Model (%s)" % (epoch+1, model_name.capitalize(), suffix.capitalize()), wrap=True)
-    plt.savefig(os.path.join(logging_dir, "figures/%s/current_batch_%s.png" % (model_name, suffix)))
+    if show_title:
+        plt.title("%d Epochs of Training on %s Model (%s)" % (epoch+1, model_name.capitalize(), suffix.capitalize()), wrap=True)
+    plt.savefig(os.path.join(logging_dir, "figures/%s/%s_%s.png" % (model_name, prefix, suffix)), pad_inches = 0)
     plt.clf()
     plt.close()
